@@ -2,7 +2,9 @@
 
 ## Description
 
-This is a PoC implementation of the method presented in  
+This is a PoC implementation of the method presented
+in the following paper.  
+
 Hideaki Goto, "Disruption-tolerant Local Authentication Method
 for Network Roaming Systems," Journal of Information Processing (JIP),
 Vol. 32,  pp.407-416, 2024.  
@@ -14,13 +16,16 @@ Local Authentication.
 ## Usage
 1. Open **dtauth-poc.pl** by a text editor, and set your own realm and HMAC key.
 2. Run **make** command to generate an EC key pair.
-3. Install required perl modules if the following command line shows any missing ones.  
+3. Install required perl modules if the following command line shows any missing one.  
  $ perl -c dtauth-poc.pl
 4. Run the script by  
  $ perl dtauth-poc.pl
 
 ## TIPS for buiding a real AAA system
-It is strongly recommended to use a web-based provisioning system.
+It is strongly recommended to use a web-based provisioning system
+because the User-Name is very long.
+In addition, manual configuration of server authentication is cumbersome.
+
 For example, 
 - [Passpoint Provisioning Tools](https://github.com/hgot07/PasspointProvisioningTools)
 - [eduroam Provisioning Tools](https://github.com/hgot07/eduroamProvisioningTools) 
