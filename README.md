@@ -1,2 +1,1 @@
-# radius-dta
-Disruption-tolerant authentication PoC
+# RADIUS-DTA: Disruption-Tolerant Authentication PoC
