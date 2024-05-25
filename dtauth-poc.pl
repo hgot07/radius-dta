@@ -12,8 +12,9 @@
 # Realm (lower-case only)
 my $realm = 'dta.example.com';
 
-# HMAC shared key - Use your own key!
+# HMAC shared key - Generate your own key and use it!
 my $key = 'izivz7Km2kHW0rF4wc0UXuAlV8PFNNgNYN9WarKw';
+
 
 # To see supported curves,
 #  openssl ecparam -list_curves
