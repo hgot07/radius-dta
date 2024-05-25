@@ -42,10 +42,11 @@ and scalable Wi-Fi systems with fast network connection.
 4. Run the script by  
  $ perl dtauth-poc.pl
 
-## TIPS for buiding a real AAA system
+## TIPS for building a real AAA system
 It is strongly recommended to use a web-based provisioning system
-because the generated User-Name is very long.
-In addition, manual configuration of server authentication is cumbersome.
+because the generated User-Name is too long to type in manually.
+In addition, manual configuration of server authentication is cumbersome
+and error prone.
 
 For example, 
 - [Passpoint Provisioning Tools](https://github.com/hgot07/PasspointProvisioningTools)
