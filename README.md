@@ -43,6 +43,7 @@ and scalable Wi-Fi systems with fast network connection.
  $ perl dtauth-poc.pl
 
 ## TIPS for building a real AAA system
+### Web-based provisioning
 It is strongly recommended to use a web-based provisioning system
 because the generated User-Name is too long to type in manually.
 In addition, manual configuration of server authentication is cumbersome
@@ -54,6 +55,7 @@ For example,
 
 would help you develop a profile issuing website.
 
+### Authentication code for AAA server
 FreeRADIUS provides Perl and Python modules.
 You can implement the Local Authentication by writing a short script.
 
