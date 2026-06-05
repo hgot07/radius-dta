@@ -8,6 +8,9 @@
 #  Network Roaming Systems"
 # https://doi.org/10.2197/ipsjjip.32.407
 #
+# 20240525	Initial release
+# 20260605	Add note about Android's limitation
+#
 
 # Realm (lower-case only)
 my $realm = 'dta.example.com';
@@ -23,6 +26,9 @@ my $key = 'izivz7Km2kHW0rF4wc0UXuAlV8PFNNgNYN9WarKw';
 #  openssl ecparam -genkey -name secp128r1 -out eckey-pair.pem
 #  openssl ec -in eckey-pair.pem -outform PEM -pubout -out eckey-pub.pem
 #  openssl ec -in eckey-pair.pem -outform PEM -out eckey-priv.pem
+#
+# Note: secp128r1 has been dropped in recent version of openssl.
+#   Android needs this small curve since it limits User-Name up to 62B.
 #
 # To view the EC key pair content,
 #  openssl ec -text -noout -in eckey-priv.pem
@@ -85,21 +91,21 @@ my $userID = $datecode.$sr->randregex('[a-zA-Z0-9+/]{3}');
 my $username = $userID.'@'.$realm;
 
 my $hmac = hmac($userID, $key, \&sha256);
-my $hmac64 = encode_base64($hmac);
+my $hmac64 = encode_base64($hmac, "");
 my $password = substr($hmac64, 0, 8);
 
 print "Not before:  ".$sdate."Z\n";
 print "Valid until: ".$edate."Z\n";
 print "User-Name: ".$username."\n";
 print "Password: ".$password."\n";
-print "HMAC: ".$hmac64;
+print "HMAC: ".$hmac64."\n";
 
 # https://manpages.ubuntu.com/manpages/bionic/man3/Crypt::PK::ECC.3pm.html
 
 my $priv = Crypt::PK::ECC->new("$SCRIPTDIR/eckey-priv.pem");
 #my $sig = $priv->sign_message($username, 'SHA256');
 my $sig = $priv->sign_message($userID, 'SHA256');
-my $sig64 = encode_base64($sig);
+my $sig64 = encode_base64($sig, "");
 chomp($sig64);
 
 my $UN = $userID.$dlm.$sig64;
@@ -195,13 +201,13 @@ else {
 
 
 $hmac = hmac($userID, $key, \&sha256);
-$hmac64 = encode_base64($hmac);
+$hmac64 = encode_base64($hmac, "");
 $password = substr($hmac64, 0, 8);
 
 print "Extracted User-Name: ",$username."\n";
 print "Extracted UserID: ",$userID."\n";
 print "Extracted Realm: ".$realm."\n";
 print "Decoded password: ".$password."\n";
-print "HMAC: ".$hmac64;
+print "HMAC: ".$hmac64."\n";
 
 1;

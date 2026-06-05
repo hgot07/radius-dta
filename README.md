@@ -36,7 +36,8 @@ and scalable Wi-Fi systems with fast network connection.
 
 ## Usage
 1. Open **dtauth-poc.pl** by a text editor, and set your own realm and HMAC key.
-2. Run **make** command to generate an EC key pair.
+2. Run **make** command to generate an EC key pair.  
+Note: Recent openssl may fail due to lack of secp128r1 curve. Unfortunately, this small curve is needed since Android limits the User-Name length up to 62 octets (probably due to misunderstanding of the specification).
 3. Install required perl modules if the following command line shows any missing one.  
  $ perl -c dtauth-poc.pl
 4. Run the script by  
@@ -54,6 +55,11 @@ For example,
 - [eduroam Provisioning Tools](https://github.com/hgot07/eduroamProvisioningTools) 
 
 would help you develop a profile issuing website.
+
+Note: If you use a more-secure curve such as prime256v1, 
+you cannot support Android devices.
+Please consider using EAP-TLS instead for Android.
+
 
 ### Authentication code for AAA server
 FreeRADIUS provides Perl and Python modules.
