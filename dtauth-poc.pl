@@ -10,6 +10,7 @@
 #
 # 20240525	Initial release
 # 20260605	Add note about Android's limitation
+# 20260628	Modernize. Include the realm into HMAC and signature.
 #
 
 # Realm (lower-case only)
@@ -27,18 +28,17 @@ my $key = 'izivz7Km2kHW0rF4wc0UXuAlV8PFNNgNYN9WarKw';
 #  openssl ec -in eckey-pair.pem -outform PEM -pubout -out eckey-pub.pem
 #  openssl ec -in eckey-pair.pem -outform PEM -out eckey-priv.pem
 #
-# Note: secp128r1 has been dropped in recent version of openssl.
-#   Android needs this small curve since it limits User-Name up to 62B.
+# Note: secp128r1 has been dropped in recent versions of openssl.
+#   Android needs this small curve since it limits User-Name up to 62b.
 #
 # To view the EC key pair content,
 #  openssl ec -text -noout -in eckey-priv.pem
 
+use strict;
+use warnings;
 use DateTime;
 use MIME::Base64;
-use Data::UUID;
-use Digest::SHA qw(sha1 sha224 sha256 sha384 sha512);
-use Digest::HMAC qw(hmac hmac_hex);
-use String::Random;
+use Digest::SHA qw(hmac_sha256_base64);
 use File::Basename;
 
 use Crypt::PK::ECC;
@@ -50,7 +50,7 @@ my $SCRIPTDIR = realpath(dirname($0));
 my $dlm = '|';
 
 # Encoding scheme selector (one letter)
-my $EncScheme = 'A';
+my $EncScheme = 'C';
 
 # Not before
 my $sdate = DateTime->now();
@@ -78,21 +78,26 @@ sub c2val {
 	return(-1);
 }
 
-my $sr = String::Random->new();
-$rstr = $sr->randregex('[a-zA-Z0-9+/]{3}');
+sub random_b64_string {
+	my ($len) = @_;
+	my @b64 = ('A'..'Z', 'a'..'z', '0'..'9', '+', '/');
+	return join '', map { $b64[int rand @b64] } 1..$len;
+}
 
+my $rstr = random_b64_string(3);
 
 # Compose User-Name and derive Password
 # SYMDLLrrr
-my $datecode = sprintf("%s%s%s%s%s%s", $EncScheme,
+my $datecode = sprintf("%s%s%s%s%s",
   val2c($sdate->year - 2000), val2c($sdate->month), 
   val2c($sdate->day), val2c(int($days /64)), val2c($days %64));
-my $userID = $datecode.$sr->randregex('[a-zA-Z0-9+/]{3}');
+my $userID = $EncScheme.$datecode.$rstr;
+$realm = lc $realm;	# enforce lower-case
 my $username = $userID.'@'.$realm;
 
-my $hmac = hmac($userID, $key, \&sha256);
-my $hmac64 = encode_base64($hmac, "");
-my $password = substr($hmac64, 0, 8);
+# SHA256 always produces 43 chars. Padding is of no use in this app.
+my $hmac64 = hmac_sha256_base64($username, $key).'=';
+my $password = substr($hmac64, 0, 12);
 
 print "Not before:  ".$sdate."Z\n";
 print "Valid until: ".$edate."Z\n";
@@ -103,8 +108,7 @@ print "HMAC: ".$hmac64."\n";
 # https://manpages.ubuntu.com/manpages/bionic/man3/Crypt::PK::ECC.3pm.html
 
 my $priv = Crypt::PK::ECC->new("$SCRIPTDIR/eckey-priv.pem");
-#my $sig = $priv->sign_message($username, 'SHA256');
-my $sig = $priv->sign_message($userID, 'SHA256');
+my $sig = $priv->sign_message($username, 'SHA256');
 my $sig64 = encode_base64($sig, "");
 chomp($sig64);
 
@@ -125,9 +129,9 @@ print "\n----------------\n";
 $username = $RadUserName;
 $EncScheme = substr($username, 0, 1);
 
-$validYear = 2000 + c2val(substr($username, 1, 1));
-$validMonth = c2val(substr($username, 2, 1));
-$validDay = c2val(substr($username, 3, 1));
+my $validYear = 2000 + c2val(substr($username, 1, 1));
+my $validMonth = c2val(substr($username, 2, 1));
+my $validDay = c2val(substr($username, 3, 1));
 $days = c2val(substr($username, 4, 1)) * 64;
 $days += c2val(substr($username, 5, 1));
 
@@ -191,8 +195,7 @@ if ( $sig64 eq '' ){
 else {
 	$sig = decode_base64($sig64);
 	my $pub = Crypt::PK::ECC->new("$SCRIPTDIR/eckey-pub.pem");
-#	if ( $pub->verify_message($sig, $username, 'SHA256') ){
-	if ( $pub->verify_message($sig, $userID, 'SHA256') ){
+	if ( $pub->verify_message($sig, $username, 'SHA256') ){
 		print "OK\n";
 	}
 	else{	print "NG\n";
@@ -200,9 +203,8 @@ else {
 }
 
 
-$hmac = hmac($userID, $key, \&sha256);
-$hmac64 = encode_base64($hmac, "");
-$password = substr($hmac64, 0, 8);
+$hmac64 = hmac_sha256_base64($username, $key).'=';
+$password = substr($hmac64, 0, 12);
 
 print "Extracted User-Name: ",$username."\n";
 print "Extracted UserID: ",$userID."\n";
